@@ -90,6 +90,17 @@ class _dashboardpageState extends State<dashboardpage> {
 
     super.initState();
   }
+  String _searchKeyword = '';
+  List<dynamic> _filterFood() {
+    if (_searchKeyword.isEmpty) {
+      return food; // Jika kata kunci kosong, tampilkan semua daftar makanan
+    } else {
+      return food
+          .where((item) =>
+          item['name'].toLowerCase().contains(_searchKeyword.toLowerCase()))
+          .toList(); // Filter berdasarkan kata kunci (ignoring case)
+    }
+  }
 
 
   @override
@@ -157,8 +168,13 @@ class _dashboardpageState extends State<dashboardpage> {
                     width: MediaQuery.of(context).size.width / 1.1,
                     child: TextFormField(
 
+                      onChanged: (value) {
+                        setState(() {
+                          _searchKeyword = value; // Step 2: Update _searchKeyword saat pengguna memasukkan teks baru
+                        });
+                      },
                       decoration: InputDecoration(
-
+                      hintText: "Search",
                         filled: true,
                         fillColor: Colors.white,
                         enabledBorder: OutlineInputBorder(
@@ -194,9 +210,9 @@ class _dashboardpageState extends State<dashboardpage> {
 
                   child: ListView.builder(
 
-                    itemCount: food.length,
+                    itemCount: _filterFood().length,
                     itemBuilder: (context, index) {
-                      final data = food[index];
+                      final data = _filterFood()[index];
                       List<String> ingredientList = data['ingredients'].split(", ");
                       int ingredientCount = ingredientList.length;
                       return Column(

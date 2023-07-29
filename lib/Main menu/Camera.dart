@@ -19,7 +19,7 @@ class CameraPage extends StatefulWidget {
 
 class _CameraPageState extends State<CameraPage> {
   File? _selectedImage;
-
+  bool _isLoading = false;
   Future<void> _pickImage(ImageSource source) async {
     final picker = ImagePicker();
     final pickedImage = await picker.pickImage(source: source);
@@ -109,7 +109,16 @@ class _CameraPageState extends State<CameraPage> {
                 print('No image selected.');
               }
             },
-            child: Text('Send Image'),
+            child: _isLoading
+                ? Row(
+
+              children: [
+                CircularProgressIndicator(color: Colors.white,),
+                SizedBox(width: 10),
+                Text('Sending Image...'),
+              ],
+            ) // Step 4: Tampilkan loading indicator jika _isLoading true
+                : Text('Send Image'),
             style: ElevatedButton.styleFrom(
               primary: button,
               onPrimary: Colors.white,
@@ -129,12 +138,17 @@ class _CameraPageState extends State<CameraPage> {
       final url = Uri.parse('https://pred-dot-recipe-finder-388213.as.r.appspot.com/predict');
       final request = http.MultipartRequest('POST', url);
       request.files.add(await http.MultipartFile.fromPath('image', _selectedImage!.path));
+      setState(() {
+        _isLoading = true;
+      });
 
       try {
         final response = await request.send();
         if (response.statusCode == 200) {
           print("berhasil proses image");
-
+          setState(() {
+            _isLoading = false;
+          });
           final responseString = await response.stream.bytesToString();
           final jsonResponse = jsonDecode(responseString);
 
@@ -147,12 +161,27 @@ class _CameraPageState extends State<CameraPage> {
               ),
             );
           } else {
+            setState(() {
+              _isLoading = false;
+            });
             print('Invalid response format.');
           }
         } else {
-          print('Failed to send image. Error: ${response.reasonPhrase}');
+          setState(() {
+            _isLoading = false;
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to send image. Error: ${response.reasonPhrase} please try again or change image',style: TextStyle(
+                fontSize: 18
+            ),),
+              backgroundColor: button,),
+          );
+
         }
       } catch (error) {
+        setState(() {
+          _isLoading = false;
+        });
         print('Error sending image: $error');
       }
       catch (error) {
